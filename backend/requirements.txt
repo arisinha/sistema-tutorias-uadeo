@@ -1,0 +1,25 @@
+# Django & Web
+Django>=4.2,<5.0
+djangorestframework>=3.14,<4.0
+django-cors-headers>=4.3,<5.0
+gunicorn>=21.0,<23.0
+
+# Database
+psycopg2-binary>=2.9,<3.0
+dj-database-url>=2.1,<3.0
+
+# Async Processing
+celery>=5.3,<6.0
+redis>=5.0,<6.0
+
+# File Processing
+pandas>=2.1,<3.0
+openpyxl>=3.1,<4.0
+python-docx>=1.1,<2.0
+weasyprint>=60.0,<62.0
+
+# Environment
+python-decouple>=3.8,<4.0
+
+# Utilities
+Pillow>=10.0,<11.0
