@@ -587,7 +587,7 @@ const submitImport = async () => {
 
   importing.value = true
   try {
-    const file = importForm.value.archivo[0]
+    const file = Array.isArray(importForm.value.archivo) ? importForm.value.archivo[0] : importForm.value.archivo
     await alumnosService.importarExcel(file, importForm.value.programa)
     showMessage?.('Importación completada', 'success')
     importDialog.value = false

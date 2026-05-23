@@ -94,11 +94,17 @@ def procesar_reporte_individual(archivo, reporte) -> Tuple[List[Dict], List[str]
                         else:
                             try:
                                 dato['fecha_sesion'] = pd.to_datetime(valor).date()
-                            except:
-                                pass
+                            except Exception as e:
+                                import logging
+                                logger = logging.getLogger(__name__)
+                                logger.warning(f"No se pudo parsear fecha individual '{valor}': {str(e)}")
                 
-                # Determinar si requiere seguimiento
-                if dato.get('rendimiento') in ['bajo', 'muy_bajo']:
+                # Determinar si requiere seguimiento - Analiza múltiples factores
+                rendimiento_bajo = dato.get('rendimiento') in ['bajo', 'muy_bajo']
+                asistencia_baja = dato.get('asistencia') in ['regular', 'deficiente']
+                tiene_materias_riesgo = bool(dato.get('materias_riesgo', '').strip())
+                
+                if rendimiento_bajo or asistencia_baja or tiene_materias_riesgo:
                     dato['requiere_seguimiento'] = True
                 
                 datos.append(dato)
@@ -157,12 +163,17 @@ def procesar_reporte_grupal(archivo, reporte) -> Tuple[Dict, List[str]]:
                         else:
                             try:
                                 datos['fecha_sesion'] = pd.to_datetime(valor).date()
-                            except:
-                                pass
+                            except Exception as e:
+                                import logging
+                                logger = logging.getLogger(__name__)
+                                logger.warning(f"No se pudo parsear fecha grupal '{valor}': {str(e)}")
         
-        # Buscar lista de alumnos en riesgo
-        if 'alumnos en riesgo' in df.columns.str.lower().str.strip().tolist():
-            col_idx = df.columns.str.lower().str.strip().tolist().index('alumnos en riesgo')
+        # Buscar lista de alumnos en riesgo (con flexibilidad en nombramiento)
+        cols_bajas = df.columns.str.lower().str.strip().tolist()
+        col_riesgo = next((col for col in cols_bajas if 'riesgo' in col or 'problema' in col), None)
+        
+        if col_riesgo:
+            col_idx = cols_bajas.index(col_riesgo)
             matriculas = df.iloc[:, col_idx].dropna().tolist()
             
             alumnos_ids = list(
@@ -244,16 +255,30 @@ def generar_plantilla_reporte(tipo_reporte: str) -> BytesIO:
                 'Tema 1, Tema 2',
                 'Descripción de problemáticas',
                 'Observaciones generales'
+            ],
+            '': ['', '', '', '', '', ''],
+            'Alumnos en Riesgo': [
+                'A12345678', 'A87654321', '', '', '', ''
             ]
         })
         
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
             df.to_excel(writer, index=False, sheet_name='Reporte Grupal')
             
-            # Hoja para alumnos en riesgo
-            alumnos_riesgo = pd.DataFrame(columns=['Alumnos en Riesgo'])
-            alumnos_riesgo.loc[0] = ['A12345678']
-            alumnos_riesgo.to_excel(writer, index=False, sheet_name='Alumnos Riesgo')
-    
+            # Agregar hoja de instrucciones
+            instrucciones = pd.DataFrame({
+                'Campo': ['Fecha de Sesión', 'Alumnos Atendidos', 'Total Alumnos', 'Temas Tratados', 'Problemáticas Detectadas', 'Observaciones', 'Alumnos en Riesgo'],
+                'Descripción': [
+                    'Formato: YYYY-MM-DD',
+                    'Número de alumnos que asistieron a la sesión',
+                    'El número de integrantes del grupo',
+                    'Lista de temas tratados',
+                    'Problemáticas identificadas a nivel grupal',
+                    'Comentarios',
+                    'En la última columna, ponga las matrículas de alumnos que muestran algún riesgo'
+                ]
+            })
+            instrucciones.to_excel(writer, index=False, sheet_name='Instrucciones')
+            
     output.seek(0)
     return output

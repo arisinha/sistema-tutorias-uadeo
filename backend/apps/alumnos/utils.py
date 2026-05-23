@@ -32,12 +32,12 @@ def procesar_excel_alumnos(archivo, programa_educativo_id: int) -> Tuple[List[Di
         columnas_requeridas = {
             'matricula': ['matricula', 'matrícula', 'no_control', 'numero_control'],
             'nombre': ['nombre', 'nombres', 'name'],
-            'apellido_paterno': ['apellido_paterno', 'paterno', 'apellido1', 'primer_apellido'],
+            'apellido_paterno': ['apellido_paterno', 'apellido paterno', 'paterno', 'apellido1', 'primer_apellido'],
             'semestre': ['semestre', 'semester', 'nivel'],
         }
         
         columnas_opcionales = {
-            'apellido_materno': ['apellido_materno', 'materno', 'apellido2', 'segundo_apellido'],
+            'apellido_materno': ['apellido_materno', 'apellido materno', 'materno', 'apellido2', 'segundo_apellido'],
             'email': ['email', 'correo', 'correo_electronico', 'e-mail'],
             'telefono': ['telefono', 'teléfono', 'cel', 'celular', 'phone'],
         }

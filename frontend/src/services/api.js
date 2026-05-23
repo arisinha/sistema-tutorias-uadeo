@@ -31,9 +31,13 @@ api.interceptors.response.use(
     (response) => response.data,
     (error) => {
         if (error.response?.status === 401) {
-            // Redirect to login on auth error
+            // Eliminar credenciales guardadas
             localStorage.removeItem('user')
-            window.location.href = '/login'
+            
+            // Evitar recargar si ya estamos en el login o la petición fue hacia el login
+            if (!window.location.pathname.includes('/login') && error.config?.url !== '/auth/login/') {
+                window.location.href = '/login'
+            }
         }
         return Promise.reject(error)
     }

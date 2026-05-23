@@ -102,7 +102,9 @@ def procesar_reporte_async(self, reporte_id: int):
             reporte.estado = Reporte.Estado.ERROR
             reporte.mensaje_error = str(e)
             reporte.save(update_fields=['estado', 'mensaje_error'])
-        except Exception:
-            pass
+        except Exception as inner_e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error al intentar marcar el reporte {reporte_id} con error: {str(inner_e)}")
         
         raise self.retry(exc=e, countdown=60)
