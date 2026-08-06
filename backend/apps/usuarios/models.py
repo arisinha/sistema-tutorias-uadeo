@@ -63,3 +63,41 @@ class Usuario(AbstractUser):
     @property
     def es_jefe(self):
         return self.rol == self.Rol.JEFE_DEPARTAMENTO
+
+
+class AuditoriaAccion(models.Model):
+    """
+    Registro de acciones críticas del sistema.
+    """
+    usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='auditorias',
+        verbose_name='Usuario'
+    )
+    accion = models.CharField(
+        max_length=100,
+        verbose_name='Acción'
+    )
+    detalle = models.TextField(
+        verbose_name='Detalle'
+    )
+    ip = models.GenericIPAddressField(
+        null=True,
+        blank=True,
+        verbose_name='Dirección IP'
+    )
+    fecha = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Fecha'
+    )
+
+    class Meta:
+        verbose_name = 'Registro de Auditoría'
+        verbose_name_plural = 'Registros de Auditoría'
+        ordering = ['-fecha']
+
+    def __str__(self):
+        username = self.usuario.username if self.usuario else 'Sistema'
+        return f"{username} - {self.accion} ({self.fecha.strftime('%Y-%m-%d %H:%M:%S')})"

@@ -19,6 +19,8 @@ from .serializers import (
     ImportacionExcelSerializer
 )
 from .utils import procesar_excel_alumnos, generar_plantilla_alumnos
+from apps.usuarios.audit import registrar_accion
+
 
 
 class AlumnoViewSet(viewsets.ModelViewSet):
@@ -122,6 +124,12 @@ class AlumnoViewSet(viewsets.ModelViewSet):
                 creados += 1
             else:
                 actualizados += 1
+                
+        registrar_accion(
+            request, 
+            'IMPORTAR_ALUMNOS', 
+            f'Se importaron alumnos: {creados} creados, {actualizados} actualizados.'
+        )
         
         return Response({
             'mensaje': f'Importación completada: {creados} creados, {actualizados} actualizados',
@@ -162,6 +170,12 @@ class AlumnoViewSet(viewsets.ModelViewSet):
         
         # Actualizar alumnos
         updated = Alumno.objects.filter(id__in=alumno_ids).update(tutor=tutor)
+        
+        registrar_accion(
+            request,
+            'ASIGNAR_TUTOR',
+            f'Se asignaron {updated} alumnos al tutor {tutor.username}.'
+        )
         
         return Response({
             'mensaje': f'{updated} alumnos asignados a {tutor.get_full_name()}'

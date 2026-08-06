@@ -16,6 +16,8 @@ from .serializers import (
     UsuarioCreateSerializer
 )
 from .permissions import EsCoordinadorOJefe
+from .audit import registrar_accion
+
 
 
 class LoginView(APIView):
@@ -35,11 +37,13 @@ class LoginView(APIView):
         
         if user is not None:
             login(request, user)
+            registrar_accion(request, 'LOGIN', 'Inicio de sesión exitoso')
             return Response({
                 'message': 'Inicio de sesión exitoso',
                 'user': UsuarioSerializer(user).data
             })
         
+        # We can't log the user ID since it failed, but we can log the attempt (Optional)
         return Response(
             {'error': 'Credenciales inválidas'},
             status=status.HTTP_401_UNAUTHORIZED
@@ -87,8 +91,15 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         return UsuarioSerializer
     
     def get_queryset(self):
+        user = self.request.user
         queryset = Usuario.objects.all()
         
+        # Filtrar por scope (scope-based access)
+        if user.es_coordinador and user.programa_educativo:
+            queryset = queryset.filter(programa_educativo=user.programa_educativo)
+        elif user.es_jefe and user.unidad:
+            queryset = queryset.filter(unidad=user.unidad)
+            
         # Filtrar por rol
         rol = self.request.query_params.get('rol')
         if rol:

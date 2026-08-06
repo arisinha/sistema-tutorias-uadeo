@@ -8,6 +8,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from apps.usuarios.permissions import EsCoordinadorOJefe, EsTutorOCoordinador
+from apps.usuarios.audit import registrar_accion
+from apps.administracion.models import PeriodoAcademico
 from .models import Reporte
 from .serializers import (
     ReporteSerializer,
@@ -16,6 +18,7 @@ from .serializers import (
 )
 from .processors import generar_plantilla_reporte
 from .tasks import procesar_reporte_async
+
 
 
 class ReporteViewSet(viewsets.ModelViewSet):
@@ -68,6 +71,14 @@ class ReporteViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(tutor_id=tutor)
         
         return queryset
+
+    def perform_destroy(self, instance):
+        registrar_accion(
+            self.request,
+            'ELIMINAR_REPORTE',
+            f'Se eliminó el reporte {instance.id} de {instance.tutor.username} ({instance.tipo_reporte})'
+        )
+        instance.delete()
     
     @action(detail=False, methods=['post'])
     def subir(self, request):
@@ -90,6 +101,13 @@ class ReporteViewSet(viewsets.ModelViewSet):
                 {'error': 'El archivo excede el tamaño máximo de 10 MB'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+            
+        # Validar periodo
+        if not PeriodoAcademico.objects.filter(id=serializer.validated_data['periodo']).exists():
+            return Response(
+                {'error': 'El período especificado no existe'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         # Crear reporte
         reporte = Reporte.objects.create(
@@ -102,6 +120,12 @@ class ReporteViewSet(viewsets.ModelViewSet):
         
         # Iniciar procesamiento asíncrono
         procesar_reporte_async.delay(reporte.id)
+        
+        registrar_accion(
+            request,
+            'SUBIR_REPORTE',
+            f'Se subió el reporte {reporte.id} ({reporte.tipo_reporte})'
+        )
         
         return Response({
             'mensaje': 'Reporte subido exitosamente. El procesamiento ha iniciado.',

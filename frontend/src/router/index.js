@@ -55,6 +55,12 @@ const routes = [
     },
     // Admin routes
     {
+        path: '/usuarios',
+        name: 'usuarios',
+        component: () => import('@/views/admin/UsuariosView.vue'),
+        meta: { requiresAuth: true, roles: ['jefe'] }
+    },
+    {
         path: '/programas',
         name: 'programas',
         component: () => import('@/views/admin/ProgramasView.vue'),

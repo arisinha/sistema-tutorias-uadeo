@@ -1,6 +1,20 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Usuario
+from .models import Usuario, AuditoriaAccion
+
+
+@admin.register(AuditoriaAccion)
+class AuditoriaAccionAdmin(admin.ModelAdmin):
+    list_display = ['usuario', 'accion', 'ip', 'fecha']
+    list_filter = ['accion', 'fecha']
+    search_fields = ['usuario__username', 'accion', 'detalle', 'ip']
+    readonly_fields = ['usuario', 'accion', 'detalle', 'ip', 'fecha']
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Usuario)

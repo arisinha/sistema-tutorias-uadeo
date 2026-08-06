@@ -161,6 +161,12 @@ const menuItems = computed(() => [
   },
   // Admin menu
   { 
+    title: 'Usuarios', 
+    to: '/usuarios', 
+    icon: 'mdi-account-cog',
+    show: authStore.esJefe
+  },
+  { 
     title: 'Programas', 
     to: '/programas', 
     icon: 'mdi-book-education',
